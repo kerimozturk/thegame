@@ -1,0 +1,73 @@
+UNITY İle Android’e Uygulama Geliştirmek – 2 – Telefon Sensörünü Kullanmak
+
+Bu derste Android veya iOS için uygulama geliştirirken telefonun sensörünü nasıl kullanabileceğinizi göreceksiniz. Bu sefer ilk derse göre daha eğlenceli bir uygulama yapmaya çalışacağız, sensörle bir topu yönettiğimiz basit ama yüksek potansiyelli, geliştirmeye açık bir oyunun temellerini atacağız (bkz. Ballance oyunu). Dokunmatik ekranı kullanmayı anlattığım ilk derse gitmek için tıklayın: http://yasirkula.com/2013/07/17/unity-ile-androide-uygulama-gelistirmek-1-dokunmatik-ekran-entegrasyonu/
+
+Derse başlamadan önce Unity için Android SDK‘yı kurmuş olmanız lazım. Kurmadıysanız sizi buraya alalım: http://yasirkula.com/2013/07/17/unity-android-sdk-kurulumu-resimli-anlatim/
+
+Başlayalım o halde…
+
+
+Telefonun sensörüyle ilgili işimize yarayabilecek sadece 2 komut var, bu yüzden Unity’de sensörü kullanmak dokunmatik ekranı kullanmaya göre daha kolay. İlk önce bu 2 koddan önemsiz olanını açıklamak istiyorum: “Input.deviceOrientation“. Bu değişken telefonun hangi pozisyonda tutulduğunu belirtiyor. Yani cihazın yere dik ve düzgün bir şekilde (HOME butonu aşağıda olacak şekilde) mi (DeviceOrientation.Portrait), yere dik ama tepetaklak bir şekilde (HOME butonu yukarıda olacak şekilde) mi (DeviceOrientation.PortraitUpsideDown), yere dik ve sola yatırılmış bir şekilde mi (DeviceOrientation.LandscapeLeft), yere dik ve sağa yatırılmış bir şekilde mi (DeviceOrientation.LandscapeRight), yere paralel ve ekranı yukarı bakacak şekilde mi (DeviceOrientation.FaceUp) yoksa yere paralel ve ekranı aşağı bakacak şekilde mi (DeviceOrientation.FaceDown) tutulduğunu depolar. Eğer ki cihaz abuk subuk bir eğimle tutuluyorsa o zaman bu değişken “DeviceOrientation.Unknown” değerini alır.
+
+Şimdi gelelim işimize yarayacak olan değişkene, yani direkt telefonun sensörünün döndürdüğü değerleri okumaya yarayan değişkene: “Input.acceleration“. Bu değişken bir Vector3 döndürür. Bu Vector3′ün x, y ve z değerleri -1.0 ile 1.0 arasında birer float‘tır. Bu değişken Screen.orientation ile işbirliği içinde çalışır. Normalde Screen.orientation‘ın değeri ScreenOrientation.Portrait‘tir. Ancak eğer oyunu daha geniş ekranda oynatmak istiyorsanız yatay ekranda çalışmak üzere (ScreenOrientation.LandscapeLeft) programlamanız mantıklıdır. Her iki durumda da, eğer ki cihazınız yere dik ve ekranı size bakacak şekilde duruyorsa Input.acceleration değişkeninin x değeri cihazı sağa sola yatırarak, z değeri ise cihazı ileri geri yatırarak değişir. Yok eğer cihaz yere paralel ve ekranı yukarı bakacak şekilde duruyorsa bu sefer Input.acceleration değişkeninin x değeri yine cihazı sağa sola yatırarak değişirken y değeri cihazı aşağı yukarı yatırarak değişir. Diğer pozisyonlardan bahsetmiyorum çünkü normal bir oyunda ekran bu bahsettiğim 2 durumdan birindeyken oyun oynanır. Anlayacağınız Screen.orientation‘a bakmaksızın eğer cihazınız normal bir şekilde duruyorsa Input.acceleration değişkeninin x değeri hep cihazı sağa sola yatırmakla alakalı iken cihazın pozisyonuna bağlı olarak y ve z değeri de cihazı ileri geri ya da yukarı aşağı oynatarak değişir. Olayı en iyi şekilde anlamak için yapmanız gereken şey, bu sensör değerlerini bizzat test etmek. Bunun için yeni bir proje açın ve Main Camera‘ya şu scripti atın (ardından Android için Build edip bol bol kurcalayın cihazı):
+
+
+function OnGUI()
+{
+  var yazi : String = "Input.acceleration: " + Input.acceleration;
+  yazi += "\nInput.deviceOrientation: " + Input.deviceOrientation;
+  yazi += "\nScreen.orientation: " + Screen.orientation;
+  GUI.Label( new Rect( 0, 0, Screen.width, Screen.height ), yazi );
+  if( GUI.Button( new Rect( 400, 0, 100, 50 ), "Orientation" ) )
+  {
+    if( Screen.orientation == ScreenOrientation.Portrait )
+      Screen.orientation = ScreenOrientation.LandscapeLeft;
+    else
+      Screen.orientation = ScreenOrientation.Portrait;
+  }
+}
+Artık hazırsanız oyunumuzu yapmaya başlayabiliriz!
+
+Yeni açtığınız projede yeni bir Sphere GameObject oluşturun. Buna Rigidbody ekleyin ve “Drag” değerini 3 yapın (Hava sürtünmesi olması ve topun kendiliğinden durabilmesi için). Bu obje topumuz olacak. Ardından topun üstünde yürümesi için bir Cube GameObject oluşturup bunu büyültüp topun aşağısına zemin niyetine koyun. Buna ek olarak birkaç Cube GameObject daha oluşturun ve bunları sahada rastgele konumlandırın. Bu küp objeler topumuz için birer engel olacaklar. Kendileri için hiçbir kod gerekmiyor, Collider‘ları olması yeterli. Son olarak sahneye bir de Directional Light ekleyin. Benim hazırladığım sahadan bir görüntü:
+
+http://yasirkula.files.wordpress.com/2013/07/11.png
+
+
+
+Şimdi kamerayı ayarlayalım. Topun ve kameranın rotationlarını resetleyin. Ardından kamerayı, topun z ekseninde biraz gerisinde ve y ekseninde biraz yukarısında olacak şekilde konumlandırın. Dilerseniz kamerayı aşağı yönde biraz döndürebilirsiniz. Şimdi bir Empty GameObject oluşturup bunu top objesinin bir child objesi yapıp Transform‘unu resetleyin. Ardından kamerayı da bu Empty GameObject‘in child objesi yapın. Son olarak da Empty GameObject‘e aşağıdaki ufak scripti yazın:
+
+
+function Update () {
+  transform.eulerAngles = Vector3.zero;
+}
+Niçin böyle yaptık? Çünkü top hareket ettiğinde kendi etrafında dönecek ve direkt kamerayı topun child objesi yapsaydık o da topla beraber dönecekti. Ama şimdi Empty GameObject sayesinde kamera topu takip ediyor ama topla birlikte dönmüyor çünkü Empty GameObject‘in eğimini sürekli (0,0,0)‘a ayarlıyoruz. (Eğer dilerseniz sahnedeki objelere renkli basit materyaller ekleyerek sahneyi güzelleştirebilirsiniz.)
+
+Artık tek yapmamız gereken topa hareket etmesini öğretmek için bir script yazmak. Bunun için yeni bir Javascript oluşturup bunu top objesine atayın ve içine şunu yazın:
+
+
+function FixedUpdate()
+{
+  rigidbody.AddForce( Vector3( Input.GetAxis( "Horizontal" ), 0, Input.GetAxis( "Vertical" ) ) * 10 );
+  rigidbody.AddForce( Vector3( Input.acceleration.x, 0, -Input.acceleration.z ) * 30 );
+}
+Bu kod sayesinde oyunu hem PC’de hem de Android’de test edebilirsiniz. Gördüğünüz üzere topu sola hareket ettirmek için cihazı sola yatırıp Input.acceleration.x‘ini negatif bir değer yapmalı ya da ileri hareket ettirmek için cihazı ileri yatırıp Input.acceleration.z değerini negatif (haliyle –Input.acceleration.z değerini pozitif) yapmalıyız. Fark ettiğiniz gibi cihazı ileri geri yatırarak Input.acceleration’ın z değeriyle oynuyoruz, yani oyunumuzun düzgün oynanabilmesi için cihazın kusursuz bir şekilde yere dik ve ekranı bize bakacak şekilde durması gerekiyor. Bu da iyi bir şey değil, hem de hiç. Kullanıcı belki de oyunu ekran 45 derece açıyla yukarı bakıyorken oynamak isteyecek. Bu sorunu çözmek için hemen şimdi script’i biraz daha geliştireceğiz. Ama ondan önce dilerseniz oyunu PC’de ve Android cihazınızda test edin. İşiniz bitince kodu şununla değiştirin:
+
+
+var ilkPozisyon : Vector3;
+ 
+function Start()
+{
+  ilkPozisyon = Input.acceleration;
+  Screen.orientation = ScreenOrientation.LandscapeLeft; /* Oyunu geniş ekran oynamak için */
+}
+ 
+function FixedUpdate()
+{
+  rigidbody.AddForce( Vector3( Input.GetAxis( "Horizontal" ), 0, Input.GetAxis( "Vertical" ) ) * 10 );
+  rigidbody.AddForce( Vector3( Input.acceleration.x - ilkPozisyon.x, 0, -Input.acceleration.z + ilkPozisyon.z ) * 30 );
+}
+Gördüğünüz gibi çok basit bir hamleyle sorunu çözdük: oyun başlarken cihazın sensör değerlerini bir değişkene kopyaladık ve daha sonra FixedUpdate()‘te yaptığımız sensöre dayalı işlemi (0,0,0)‘ı referans alarak değil de bu değişkenin değerini referans alarak yaptık. Yalnız eğer Unity 4.2′den eski bir versiyon kullanıyorsanız sıkıntı yaşamanız mümkün çünkü bu versiyonlarda bir bugdan dolayı oyun Android’de 5 saniye gecikmeli olarak açılıyor. Bu esnada ekran siyah oluyor ancak arkaplanda oyun oynamakta oluyor. Bunu çözmek için yapmanız gereken şey çok basit: Unity sürümünüzü güncelleyin.
+
+Böylece bu dersin de sonuna geldik. Elimizde çok basit bir oyunun prototipi bulunmakta ve biraz hayal gücüyle çok güzel bir oyun ortaya çıkabilir. Kendinizi geliştirmek amacıyla oyuna parmak sürükleme desteği de sunmaya çalışın. Böylece topu ekranda parmağımızı sürükleyerek de hareket ettirebilelim.
+
+Umarım faydalı olmuştur, başka derslerde görüşmek üzere!

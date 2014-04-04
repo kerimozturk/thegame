@@ -1,0 +1,108 @@
+UNITY – OnMouseDown Fonksiyonunu Android’e Uyarlamak
+
+
+Tekrar merhaba,
+
+Bu derste Android için yaptığınız Unity oyunlarında bir objeye parmak ile dokunulup dokunulmadığını test etmenin yöntemini göstereceğim, yani bir başka deyişle PC’deki OnMouseDown fonksiyonunu Android’de nasıl çalıştıracağınızı göstereceğim. Dersin ilham kaynağı için tıklayın: http://wiki.unity3d.com/index.php?title=OnMouseDown
+
+
+Bu işlemi yapmak için Raycast kullanacağız. Yani kameranın merkezinden başlayan ve ekranda tıkladığımız koordinat yönünde olan sonsuz uzunlukta bir ışın yollayacağız ve eğer bu ışın bir obje ile temas ederse anlayacağız ki parmağımızla dokunduğumuz objeyi bulduk. Ardından (eğer varsa) o objedeki OnMouseDown fonksiyonunu çağıracağız. Yeni bir script oluşturup scripti Main Camera‘ya atın ve içeriğini şekildeki gibi düzenleyin:
+
+
+function Update()
+{
+    var hit : RaycastHit;
+ 
+    // Ekranda basılı olan tüm parmaklara bak
+    for( var i = 0; i < Input.touchCount; i++ )
+    {
+        if( Input.touches[i].phase == TouchPhase.Began )
+        {
+            // Eğer bir parmak ekrana daha yeni basılmışsa o noktada bir Raycasting yaparak herhangi bir objeye tıklanıp tıklanmadığına bak
+            if( Physics.Raycast( camera.ScreenPointToRay( Input.touches[i].position ), hit ) )
+                hit.transform.gameObject.SendMessage( "OnMouseDown" );
+        }
+    }
+}
+Kodumuzu biraz daha geliştirerek OnMouseDrag ve OnMouseUp fonksiyonlarına da destek verebiliriz:
+
+var tr : Transform = null;
+ 
+function Update()
+{
+    var hit : RaycastHit;
+ 
+    // Ekranda basılı olan tüm parmaklara bak
+    for( var i = 0; i < Input.touchCount; i++ )
+    {
+        if( Input.touches[i].phase == TouchPhase.Began )
+        {
+            // Eğer bir parmak ekrana daha yeni basılmışsa o noktada bir Raycasting yaparak herhangi bir objeye tıklanıp tıklanmadığına bak
+            if( Physics.Raycast( camera.ScreenPointToRay( Input.touches[i].position ), hit ) )
+            {
+                tr = hit.transform;
+                hit.transform.gameObject.SendMessage( "OnMouseDown" );
+            }
+        }
+        else if( Input.touches[i].phase == TouchPhase.Ended )
+        {
+            // Eğer bir parmak ekrandan çekilirse ve bu parmak ekrana ilk dokunduğunda bir objeye tıklamışsa (tr null değilse) o obje için OnMouseUp fonksiyonunu çağır
+            if( tr != null )
+            {
+                tr.gameObject.SendMessage( "OnMouseUp" );
+                tr = null;
+            }
+        }
+        else if( Input.touches[i].phase == TouchPhase.Moved || Input.touches[i].phase == TouchPhase.Stationary )
+        {
+            // Eğer bir parmak ekranda basılı durumdaysa ve bu parmak ekrana ilk dokunduğunda bir objeye tıklamışsa (tr null değilse) o objenin OnMouseDrag fonksiyonunu çağır
+            if( tr != null )
+                tr.gameObject.SendMessage( "OnMouseDrag" );
+        }
+    }
+}
+ 
+/*
+Bu kodun eski hali aşağıdadır. Eski hali gerçek OnMouseDrag ve OnMouseUp fonksiyonlarıyla birebir aynı çalışmadığından ötürü artık kullanılmamaktadır.
+ 
+function Update()
+{
+    var tr : Transform = null;
+    var hit : RaycastHit;
+ 
+    // Ekranda basılı olan tüm parmaklara bak
+    for( var i = 0; i < Input.touchCount; i++ )
+    {
+        if( Input.touches[i].phase == TouchPhase.Began )
+        {
+            // Eğer bir parmak ekrana daha yeni basılmışsa o noktada bir Raycasting yaparak herhangi bir objeye tıklanıp tıklanmadığına bak
+            if( Physics.Raycast( camera.ScreenPointToRay( Input.touches[i].position ), hit ) )
+            {
+                tr = hit.transform;
+                hit.transform.gameObject.SendMessage( "OnMouseDown" );
+            }
+        }
+        else if( Input.touches[i].phase == TouchPhase.Ended )
+        {
+            // Eğer bir parmak ekrandan çekilirse o noktada bir Raycasting yaparak ekrandan çekilirken herhangi bir objenin üzerinde olup olmadığına bak
+            if( Physics.Raycast( camera.ScreenPointToRay( Input.touches[i].position ), hit ) )
+            {
+                tr = null;
+                hit.transform.gameObject.SendMessage( "OnMouseUp" );
+            }
+        }
+        else if( Input.touches[i].phase == TouchPhase.Moved || Input.touches[i].phase == TouchPhase.Stationary )
+        {
+            // Eğer bir parmak ekranda basılı durumdaysa ve bir objenin üzerindeyse (ve bu obje ekrana ilk dokunduğu anda tıkladığı objeyse) o objenin OnMouseDrag fonksiyonunu çağır
+            if( tr != null )
+            {
+                if( Physics.Raycast( camera.ScreenPointToRay( Input.touches[i].position ), hit ) )
+                {
+                    if( tr == hit.transform )
+                        hit.transform.gameObject.SendMessage( "OnMouseDrag" );
+                }
+            }
+        }
+    }
+}
+*/

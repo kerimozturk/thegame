@@ -1,0 +1,98 @@
+UNITY İle Android’e Uygulama Geliştirmek – 1 – Dokunmatik Ekran Entegrasyonu
+
+
+Bu UNITY dersinde Android için uygulama geliştirmenin temellerini öğreneceğiz. Dersin bu ilk parçasında dokunmatik ekranın nimetlerinden faydalanmayı görecek, ikinci derste ise telefonun hareket sensörünü kullanmayı öğreneceğiz (2. derse gitmek için tıklayın: http://yasirkula.com/2013/07/22/unity-ile-androide-uygulama-gelistirmek-2-telefon-sensorunu-kullanmak/ ). Bu derse başlamadan önce UNITY için Android SDK kurulumunu yapmış olmanız gerekiyor. Eğer yapmadıysanız şu dersimize göz atabilirsiniz: http://yasirkula.com/2013/07/17/unity-android-sdk-kurulumu-resimli-anlatim/
+
+Hazırsanız touchscreen’e dalışı yapalım…
+
+
+Şimdi yapacağımız örnek uygulamadan bahsetmek istiyorum. Bu uygulamada ekranda bir küp olacak ve bu küp bizim dokunmatik ekranda tıkladığımız konuma ışınlanacak. Ayrıca bu küpün boyutlarını ekranda elimizi sağa-sola ya da yukarı-aşağı kaydırarak değiştirebileceğiz. Bu uygulamayı yaparken öğreneceklerinizi kolaylıkla kendi uygulamalarınıza da uygulayabileceğinizi umuyorum.
+
+Öncelikle UNITY’i açın ve yeni bir proje oluşturun. Main Camera‘yı (0, 0, -10) konumuna yerleştirin ve ardından yeni bir Cube GameObject oluşturup bu objenin Transform component‘indeki değerleri resetleyin. Şimdi yeni bir Javascript oluşturup bu scripti küp objesine atayın. Son olarak sahnede bir Directional Light oluşturun ki küp objesinin hareketlerini rahatlıkla gözlemleyebilelim.
+
+Aşama 1 : PC
+
+Uygulamamızı Android’e yazmadan önce PC platformu için yazıp sonra Android’e convert etmeyi uygun gördüm. Bu yüzden öncelikle projeyi bilgisayar üzerinden test edecek, sonra birkaç ufak değişiklikle Android’e çevireceğiz.
+
+İlk önce küpün ekranda mouse ile tıkladığımız yere ışınlanmasını sağlayalım. Bunun için Update() fonksiyonunu kullanmamız uygun olur. Scripti açın ve Update() fonksiyonuna şu kısacık kodu yazın:
+
+
+if( Input.GetMouseButtonDown( 0 ) )
+{
+  transform.position = Camera.main.ScreenToWorldPoint( Vector3( Input.mousePosition.x, Input.mousePosition.y, 10 ) );
+}
+Bu kod sayesinde eğer herhangi bir anda farenin sol tuşuna basılırsa farenin ekrandaki konumu Main Camera’nın bakış açısına göre 3 boyutlu uzaydaki bir koordinata çevriliyor ve obje bu koordinata ışınlanıyor. Şimdi biraz daha detaylı açıklayayım:
+
+“Camera.main” ibaresi sahnedeki “MainCamera” tag‘ına sahip kameraya ulaşmak için kullanılır. Camera class’ının içerisinde “ScreenToWorldPoint” adında bir komut (method) bulunmaktadır. Bu komutun parantezinin içine bir Vector3 değer girilir. Girilen bu Vector3′ün x ve y değerleri ekrandaki bir pixelin konumuna işaret etmelidir, bizim durumumuzda bu mouse’nin ekrandaki konumunun x ve y koordinatlarına denk geliyor. Vector3′ün z değeri ise 3 boyutlu uzayda çevrilecek noktanın kameradan kaç metre uzak olması gerektiğini belirtiyor, bunun değeri ise bizim örneğimizde 10. Yani Main Camera’nın z koordinatının -10′da olduğunu ele alırsak küp objemizin z değeri bundan 10 birim fazla olacak, yani 0 olacak. “ScreenToWorldPoint” method’u içine girilen bu Vector3′ü alır ve bize 3 boyutlu uzayda bir nokta döndürür. Bu nokta döndürülürken hangi kameranın referans alınacağını ise en başta belirtmiştik zaten “Camera.main” ibaresiyle.
+
+Şimdi de küpün boyutunun biz mouse’yi sürükledikçe değişmesini ayarlayalım. Bunun için scriptin içindeki tüm kodu şöyle değiştirin:
+
+
+var mouseEskiKonum : Vector3;
+ 
+function Update ()
+{
+  if( Input.GetMouseButtonDown( 0 ) )
+  {
+    transform.position = Camera.main.ScreenToWorldPoint( Vector3( Input.mousePosition.x, Input.mousePosition.y, 10 ) );
+    mouseEskiKonum = Input.mousePosition;
+  }
+  if( Input.GetMouseButton( 0 ) )
+  {
+    transform.localScale += ( Input.mousePosition - mouseEskiKonum ) / 100;
+    mouseEskiKonum = Input.mousePosition;
+  }
+}
+Burada görüldüğü üzere öncelikle mouseEskiKonum adında bir Vector3 değişken oluşturduk ve ekranda bir noktaya tıklandığında bu değişkene mouse’nin koordinatını atadık. Ardından “Input.GetMouseButton( 0 )” komutuyla, mouse’nin sol tuşunun basılı olduğu her frame’de objenin boyutunun (transform.localScale) mouse’nin mevcut konumuyla eski konumu arasındaki farkın 1/100′ü kadar değişmesini sağladık. Neden 1/100? Çünkü ekran koordinatları pixellerle alakalı ve mouse’yi birazcık bile oynatsak ekranda epey pixel katedebiliriz. Ancak 3 boyutlu dünyada (World koordinatlarında) metrelerle işlem yapıyoruz ve 1 metrelik bir değişiklik bile küpün boyutunda ciddi değişikliklere yol açar. Bu yüzden her 100 pixellik oynamada küpün 1 metre büyümesini sağladık. Son olarak da “mouseEskiKonum” değişkeninin değerini mouse’nin güncel konumuna ayarladık.
+
+Ve böylece ufak uygulamamızı PC için yazmış olduk. Şimdi sıra Android’e uyarlamaya geldi!
+
+Aşama 2 : Android
+
+Uygulamayı Android’e çevirmeden önce touchscreen ile alakalı olan önemli komutları açıklamak istiyorum.
+
+Android’e uygulama geliştirirken dokunmatik ekranla işlem yapmak için en aşina olmanız gereken komut “Input.touches” değişkeni. Bu değişken ne yapar? Dokunmatik ekrana dokunmakta olan tüm parmakları içerisinde depolar. Peki bu parmaklar ne türde depolanır? Vector3 mü? Transform mu? Hayır! Bu parmaklar çok daha gelişmiş bir tür olan “Touch” türünde depolanır. Yani anlayacağınız “Input.touches” komutu dokunmatik ekranla temas halinde olan tüm parmakları birer “Touch” türünde depolamakta olan bir değişkendir.
+
+Peki bu “Touch” türünde depolanmakta olan parmak ile neler yapılabilir? “Touch” dediğim şey bir Struct olup içerisinde çeşitli özellikler barındırır. Mesela bunlardan biri “position“dır ve bu değişken parmağın dokunmatik ekrandaki konumunu bir Vector2 olarak tutar. Bunun haricinde “deltaPosition” değişkeni de oldukça önemli olup parmağın ekranda son frame’den itibaren yatayda ve dikeyde kaç pixel hareket ettiğini yine bir Vector2 olarak döndürür. O halde “deltaPosition.x” dediğimiz zaman parmağın yatay eksende kaç pixel hareket ettiğini, “deltaPosition.y” dediğimiz zaman da parmağın dikey eksende kaç pixel hareket ettiğini bulmuş oluruz. Touch’un depoladığı bir başka önemli değişken ise “phase” değişkenidir. Bu değişken TouchPhase türündedir ve parmağın durumunu depolar. Daha açık konuşmak gerekirse parmağın ekrana yeni mi dokunduğunu (TouchPhase.Began), yoksa ekranda basılı halde hareket etmekte olan bir parmak olduğunu mu (TouchPhase.Moved), ekranda basılı halde duran ama hareket etmeyen bir parmak olduğunu mu (TouchPhase.Stationary) ya da ekrandan yeni kaldırılan bir parmak olduğunu mu (TouchPhase.Ended) depolar. Ekrana aynı anda beşten fazla parmağın dokunması gibi nadir olaylarda ise değeri TouchPhase.Canceled olur. “Touch” değişkeni bir başka önemli değişken daha depolar: fingerId. Bu değişken bir int‘tir ve ekrandaki o parmağa has bir tamsayı değeridir. Bu değişkenle ne yapılabilir? Örneğin oyununuzda sadece ekrandaki bir parmağı kaâle almak istiyor, ekrana sonradan dokunan parmakların hiçbir etki etmemesini istiyorsunuz. O zaman bir değişkene o parmağın fingerId‘sini atayabilir ve ardından bir parmakla iş yaparken önce o parmağın fingerId‘sinin depoladığınız değişkene eşit olup olmadığına bakabilirsiniz.
+
+Evet, dokunmatik ekranla ilgili önemli olan komutları böylece öğrenmiş olduk. Ne kadar az idi, değil mi! İşte bu yüzden UNITY ile Android’e uygulama geliştirmek aslında hiç de zor değil. Şimdi hazırsanız yarıda bırakmış olduğumuz örnek uygulamamızı Android’e transfer edelim.
+
+Önce küpümüzü ekranda dokunduğumuz konuma ışınlandırmayı yapacağız. Bunun için bize gerekli olan şey ne? Ekrana dokunan bir parmağın (Touch) konumu. Peki bu Touch türündeki parmağa hangi değişken vasıtasıyla ulaşıyorduk? Evet, Input.touches değişkeni. O halde Input.touches değişkeninde yer alan tüm Touch‘ların “phase” değişkenine bakmalı ve eğer parmak ekrana yeni dokunmuşsa (TouchPhase.Began) küpü parmağın ekrandaki konumuna (position) ışınlamalıyız. O halde hemen küp objesine atadığınız scripti açın ve Update() fonksiyonuna şu kodu ekleyin:
+
+
+for( var parmak : Touch in Input.touches )
+{
+  if( parmak.phase == TouchPhase.Began )
+  {
+    transform.position = Camera.main.ScreenToWorldPoint( Vector3( parmak.position.x, parmak.position.y, 10 ) );
+  }
+}
+Buradaki “for( var parmak : Touch in Input.touches )” kullanımıyla ilk kez karşılaşmış olabilirsiniz. Sakın kafanız karışmasın. “for” ifadesinin böyle kullanımı aslında aşağıdaki kullanımıyla tıpatıp aynıdır, sadece yazması daha kolaydır:
+
+
+for( var i = 0; i &lt; Input.touches.Length; i++ )
+{
+  var parmak : Touch = Input.touches[i];
+  blablabla...
+}
+Sanıyorum yukarıdaki kodu açıklamaya gerek yok, çünkü neyi niçin yaptığımızı zaten açıkladım. Burada PC için olan kodu Android’e çevirmenin ne kadar kolay olduğuna dikkatinize çekmek istiyorum. Sadece birkaç satırla uygulamamıza Android desteği sunduk. Uygulamanın ikinci aşamasını Android’e aktarmak da bir bu kadar kolay. Tek yapmamız gereken for döngüsünün içini şu hale getirmek:
+
+
+for( var parmak : Touch in Input.touches )
+{
+  if( parmak.phase == TouchPhase.Began )
+  {
+    transform.position = Camera.main.ScreenToWorldPoint( Vector3( parmak.position.x, parmak.position.y, 10 ) );
+  }
+  else if( parmak.phase == TouchPhase.Moved )
+  {
+    transform.localScale += Vector3( parmak.deltaPosition.x, parmak.deltaPosition.y, 0 ) / 100;
+  }
+}
+Gördüğünüz gibi içeriye bir “else if” ekledik ve eğer parmak ekranda hareket ettirilmişse (TouchPhase.Moved) küp objesinin boyutlarını değiştirdik. Bu esnada parmakEskiKonum gibi gereksiz bir değişkene de ihtiyacımız olmadı, çünkü hatırlayacağınız gibi “Touch” türü içerisinde zaten bir deltaPosition barındırıyor! Yine hatırlayacağınız üzere bu deltaPosition bir Vector3 değil ama bir Vector2. Ancak transform.localScale değişkeni bir Vector3 ve bu yüzden transform.localScale‘e bir Vector2 ekleyemezdik. Bunu çözmek için yeni bir Vector3 oluşturduk ve buna x değeri olarak parmak.deltaPosition.x verirken y değeri olarak da parmak.deltaPosition.y verdik ve z değerini ise 0 olarak bıraktık.
+
+Evet, bitti! Buraya kadar gelmişseniz bir Android developer olma yolunda çok büyük bir basamak atladığınızı söyleyebilirim. Şimdi dilerseniz uygulamayı Android’e Build yapıp telefonunuzda test edebilirsiniz. Peki şimdi ne yapmalı? Öğrendiklerinizi pekiştirmek için niçin kendi başınıza basit bir Android oyunu yapmıyorsunuz? Heyecan verici!
+
+Umarım faydalı olmuştur, dersin ikinci kısmında görüşmek üzere!
+
+NOT: if( GUI.Button( blabla ) ) şeklinde oluşturduğunuz tüm GUI elemanları aynı zamanda otomatik olarak dokunmatik ekran desteğine de sahip. Yani onlar için ekstra kod yazmanız gerekmiyor.

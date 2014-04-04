@@ -1,0 +1,55 @@
+UNITY Fonksiyonlarının (Update gibi) Görevleri ve Çalıştırılma Öncelikleri
+
+
+Bu derste Unity‘nin Start, Update gibi MonoBehaviour fonksiyonlarının kısaca ne zaman çalıştırıldıklarını ve birbirlerine göre çalıştırılma önceliklerini göreceğiz. Yani önce hangi fonksiyon, sonra hangi fonksiyon çalıştırılır onu göreceğiz. Bu sıralamayı bilmek bazen çok işinize yarayabilir. Dersin İngilizce kaynağı için tıklayın: http://docs.unity3d.com/Documentation/Manual/ExecutionOrder.html
+
+Artık derse başlayalım…
+
+
+NOT: Ders boyunca frame (oyun karesi) terimini göreceksiniz. Bu terimi şöyle açıklayabilirim: Siz oyununuzu oynarken bilgisayar donanımınızın gücüne göre oyununuz akıcı ya da yavaş çalışır. İşte bu hız olayı frame ile ilgilidir. Bir saniyede gördüğünüz frame sayısı ne kadar çoksa oyun o kadar akıcıdır. Her bir frame’de objelerinizin scriptlerindeki Update, OnGUI gibi devamlı görev yapan fonksiyonlar çalıştırılır. Objeler hareket ettirilir, fizik simülasyonları gerçekleşir vb.
+
+Yeni Bir Scene Yüklendiğinde
+Bu fonksiyonlar yeni bir scene yüklendiği anda, sahnedeki her obje için tek seferlik çalıştırılır.
+
+Awake: Bu fonksiyon daima Start fonksiyonundan önce çalıştırılır, ayrıca bir prefab Instantiate edildiği anda da çalıştırılır. (Eğer GameObject aktif (active) değilse bu fonksiyon obje aktif olana kadar ya da bu objedeki bir scriptte yer alan bir fonksiyon dışarıdan çağrılana kadar çalıştırılmaz.)
+OnEnable: (sadece eğer obje active ise çalıştırılır) Bu fonksiyon script enabled yapıldığı anda çalıştırılır. Bu durum ise objeye oyun sırasında yeni bir component eklenmesiyle, scene’in yüklenmesiyle ya da GameObject’in Instantiate edilmesiyle gerçekleşir.
+Update Metodu İlk Kez Çalıştırılmadan Hemen Önce
+Start: Start metodu, Update fonksiyonu henüz hiç çalıştırılmamışken tek seferlik gerçekleşir (eğer script enabled ise). Yani Update’ten önce çalıştırılır.
+İki Frame Arasında
+OnApplicationPause: Mevcut frame’de yapılacak işlemler bittikten sonra (frame’in sonunda) eğer pause durumu gerçekleşmişse bu fonksiyon çalıştırılır.
+Update Sıralaması
+Genelde aşağıdaki fonksiyonlardan Update’i kullanmanız tavsiye edilir ama duruma göre diğerlerini de kullanmak isteyebilirsiniz.
+
+FixedUpdate: Genelde Update’ten daha sık çalıştırılır. Eğer oyun kasıyorsa bir frame’de birden çok kez çalıştırılabilir ya da oyun çok akıcıysa bazı karelerde hiç çalıştırılmayabilir de. Fizik olayları ve hesaplamaları FixedUpdate’ten hemen sonra gerçekleşir. Bu fonksiyonun içinde Time.deltaTime kullanmanıza lüzum yok çünkü Update’in aksine bu fonksiyon hep sabit bir süre aralıkla çalıştırılır.
+Update: Her frame’de tek bir kez çalıştırılır. En sık kullanılan Update çeşididir.
+LateUpdate: Sahnedeki objelerdeki Update metodlarının çalıştırılması bittikten sonra LateUpdate çalıştırılır ve yine her frame’de sadece bir kez çalışır. En meşhur kullanım alanlarından biri kameranın gerçek zamanlı konumlandırılmasıdır. Karakter Update metodunda hareket ettikten sonra kamera LateUpdate fonksiyonunda karakterin yeni konumunu baz alarak uygun şekilde konumlandırılabilir.
+Render (Görüntü) Alma
+OnGUI: Bir frame’de birkaç kez çalıştırılır. Önce GUI elemanları ekrana dizilir (layout) ve çizdirilir (repaint), ardından her Input eventi için tekrar çalıştırılır.
+OnDrawGizmos: Oyunu test ederken görsel anlamda kılavuz olması için Scene panelinde gizmo çizmeye yarar.
+Coroutine
+Tüm Update fonksiyonları bittikten sonra çalıştırılırlar. Coroutine fonksiyonların özelliği çalıştırılmasının yarıdayken bir süreliğine duraklatılabilmesidir. Bu süre belli bir miktar (mesela 5 saniye) olabileceği gibi belirsiz bir miktar da olabilir (mesela internetten oyununuz için global yüksekskor verilerini çekiyorsunuz diyelim. Bu işlem bitene kadar coroutine vasıtasıyla çalıştırdığınız fonksiyonu duraklatabilirsiniz.).
+
+yield: Coroutine’i bir frame bekletir. Yani kodun devamını bir sonraki frame’deki Update fonksiyonu çalıştıktan sonra işleme sokar.
+yield WaitForSeconds(2): Belli bir saniye geçtikten sonra kodun çalıştırılmasına devam edilir.
+yield WaitForFixedUpdate(): Tüm scriptlerdeki FixedUpdate fonksiyonlarının çalıştırılmasının bitmesini bekler.
+yield WWW: Bir WWW verinin internetten indirilmesi tamamlandıktan sonra kodu çalıştırmaya devam eder.
+yield StartCoroutine( BirCoroutineFonksiyon ): İçine girilen coroutine fonksiyonu çalıştırır ve onun bitmesini bekler. Ardından mevcut kodu çalıştırmaya kaldığı yerden devam eder.
+Obje Yok Olduğunda
+OnDestroy: Obje yok olmadan önceki son frame’inde, tüm Update() fonksiyonları çalıştırıldıktan sonra gerçekleşir. Objenin yok olmasının sebebi Destroy metodunun kullanımı olabileceği gibi başka bir sahneye (scene) geçiş de olabilir.
+Oyundan Çıkarken
+OnApplicationQuit: Oyundan çıkılmadan hemen önce gerçekleşir. Web player’da oyuncu web sayfasını kapatmak istediği anda çalıştırılır.
+OnDisable: Script disabled yapıldığında ya da GameObject inactive yapıldığında çalıştırılır.
+Özetleyecek olursak, işte scriptlerin çalıştırılma sıralaması:
+
+Tüm scriptlerdeki Awake fonksiyonları
+Tüm Start fonksiyonları
+Tüm FixedUpdate fonksiyonları
+Fizik hesaplamaları
+OnEnter/Exit/Stay Trigger fonksiyonları
+OnEnter/Exit/Stay Collision fonksiyonları
+Eğer Rigidbody’de interpolate özelliği açıksa bunun için gerekli hesaplamalar yapılır
+OnMouseDown/Up vb. olaylar gerçekleşir
+Tüm Update fonksiyonları
+Animasyon işleri gerçekleştirilir
+Tüm LateUpdate fonksiyonları
+Render (görüntü) alma işlemi

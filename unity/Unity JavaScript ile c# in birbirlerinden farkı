@@ -1,0 +1,241 @@
+UNITY’de JavaScript (UnityScript) ile C#’ın Birbirinden Farkları
+
+
+Bu derste Unity‘de Javascript ve C# dillerinin birbirinden temel farklarını göstereceğim. Aklıma gelmeyen şeyler de olabilir ama eminim bu yazıyı okuduktan sonra karşınıza çıkan scriptlerin %90′ını Javascript’ten C#’a (ya da tam tersi) kolaylıkla çevirebilirsiniz. Zaten aralarında çok fark yok.
+
+Dilerseniz hemen başlayalım…
+
+
+Değişken Tanımlamak
+
+Javascript’te değişkenleri böyle tanımlıyorduk:
+
+
+public var sayi : int = 10;
+var yazi : String;
+private var dogruYanlis : boolean;
+public static var birVektor : Vector3;
+C#’ta ise şöyle tanımlıyoruz:
+
+public int sayi = 10;
+string yazi;
+private bool dogruYanlis;
+public static Vector3 birVektor;
+Yani önce yine değişkenin görünürlük durumunu (public, private, static ya da hiçbir şey) yazıyoruz. Bu sefer “var” (“değişken“) takısından tamamen kurtuluyoruz ve önce değişkenin adını yazmak yerine değişkenin türünü (int, string, bool, Vector3) yazıyoruz. Ardından da değişkenin adını yazıyoruz. Burada dikkat etmeniz gereken iki değişken türü var: Javascript’teki String C#’ta string olarak geçer ve Javascript’teki boolean C#’ta bool olarak geçer.
+
+Gördüğünüz gibi C#’ta değişken tanımlamak daha kolay.
+
+Fonksiyon Tanımlamak
+
+Javascript’te fonksiyonu şöyle tanımlıyoruz:
+
+function Update() {
+}
+ 
+private function BirSayiDondur( sayi : int ) {
+    return sayi;
+}
+ 
+public static function KaresiniAl( sayi : float ) : float {
+    return sayi * sayi;
+}
+Yani önce fonksiyonun görünürlüğünü (public, private, static ya da hiçbir şey) yazıyoruz, ardından “function” takısını ekleyip fonksiyonun adını yazıyoruz ve parantez içine eğer varsa parametrelerimizi ( sayi : int ) giriyoruz. Son olarak da eğer fonksiyon bir değer döndürüyorsa (return) isteğe bağlı olarak kapatma parantezinden sonra iki nokta koyuyor ve döndürülen şeyin türünü yazıyoruz ( KaresiniAl( sayi : float ) : float ). Fonksiyonun yapacağı şeyleri ise { ve } işaretleri arasına yazıyoruz.
+
+C#’ta ise bu fonksiyonları şöyle tanımlıyoruz:
+
+
+void Update() {
+}
+ 
+private int BirSayiDondur( int sayi ) {
+    return sayi;
+}
+ 
+public static float KaresiniAl( float sayi ) {
+    return sayi * sayi;
+}
+Yine en başta fonksiyonun görünürlüğünü giriyoruz. Bu sefer “function” takısını atıyoruz ve önce fonksiyonun döndürdüğü değerin türünü (void, int, float), ardından fonksiyonun adını yazıyoruz. C#’ta döndürülen türü yazmak zorunludur. Buradaki “void” türü “hiçbir şey” anlamındadır ve eğer fonksiyon bir değer return etmiyorsa (Update gibi) kullanılır. Dikkat etmeniz gereken son husus ise parametre girme kısmı. Javascript’te “sayi : int” yazarken bu sefer önce parametrenin türünü, sonra parametrenin ismini giriyoruz ve iki nokta işaretinden kurtuluyoruz: “int sayi“.
+
+Coroutine
+
+C#’ta özel bir durum olarak coroutine‘ler ile çalışırsanız, yani içerisinde “yield” ifadesi bulunan herhangi bir fonksiyon oluşturursanız (daha da açacak olursak: kodun çalıştırılmasını belli ya da belirsiz bir süre boyunca duraklatabilen bir fonksiyon oluşturuyorsanız) o fonksiyonun döndürdüğü değer “IEnumerator” türünde olmalıdır. Start, Awake veya OnTriggerEnter gibi tek seferlik çalışan (yani Update gibi her daim çalışmayan) hazır fonksiyonları coroutine yapabilirsiniz. Bunun için o fonksiyonu override yapmalı, yani türünü “void“den “IEnumerator“a çekmelisiniz:
+
+
+IEnumerator Start() {
+    yield return new WaitForSeconds( 2.0f );
+    print( "2 saniye sonra bu kod çalışacak." );
+}
+Hazır fonksiyonlar dışında kendi oluşturduğunuz fonksiyonları da “IEnumerator” türünde yaparak birer coroutine’e çevirebilirsiniz.
+
+Az önceki kodda yield kullanımının Javascript’ten farkını da görüyorsunuz. Eğer kodu Javascript ile yazacak olsaydık:
+
+
+function Start() {
+    yield WaitForSeconds( 2 );
+    print( "2 saniye sonra bu kod çalışacak." );
+}
+Yani C#’ta yield komutundan sonra ek olarak “return” takısı koyuyoruz.
+
+Class’lar ve Kütüphaneler
+
+Yeni bir C# kodu oluşturursanız karşınıza şöyle bir kod gelecektir:
+
+
+using UnityEngine;
+using System.Collections;
+ 
+public class NewBehaviourScript : MonoBehaviour {
+ 
+    void Start () {
+     
+    }
+     
+    void Update () {
+     
+    }
+}
+Ancak yeni bir Javascript kodu oluşturursanız farklı bir şeyle karşılaşacaksınız:
+
+
+function Start () {
+ 
+}
+ 
+function Update () {
+ 
+}
+Yani yeni bir C# kodu oluşturduğumuzda ekstradan şu parça da geliyor:
+
+using UnityEngine;
+using System.Collections;
+ 
+public class NewBehaviourScript : MonoBehaviour {
+Yeni bir script oluşturduğumuzda aslında yeni bir class oluşturuyoruz ancak Javascript “kolaylık”ından dolayı bu class’ın tanımlanmasını (public class NewBehaviourScript : MonoBehaviour) göstermiyor. Bir class nedir? İçinde fonksiyonlar ve değişkenler bulunduran bir büyük birimdir. Dediğim gibi, yazdığımız her script otomatik olarak bir class niteliğindedir ancak dilersek bir scriptin içinde kendi elimizle yeni bir class daha oluşturabiliriz. Bunun nasıl olduğuyla ilgili detaylara girmeyeceğim ancak bazı durumlarda kendi inner-class‘larımızı (bir class’ın içerisinde yer alan başka bir class; yani az önce bahsettiğim şey) oluşturmak bize işlem yaparken çok kolaylık sağlayabilir.
+
+İster istemez C#’ta bir class’ın nasıl tanımlandığından bahsetmeliyim çünkü yeni bir C# oluşturunca otomatik olarak yeni bir class tanımlamış oluyoruz:
+
+1
+public class NewBehaviourScript : MonoBehaviour
+Önce class’ın erişilebilirliğini (public, private, static ya da hiçbir şey) yazıyoruz, ardından “class” takısını ekleyip class’ın adını yazıyoruz (Varsayılan olarak script’ler public olarak başlar, böylece başka scriptlerden GetComponent() vasıtasıyla bu scripte rahatlıkla erişebiliriz.). Bizim durumumuzda bu NewBehaviourScript ancak siz hangi isimde bir C# scripti oluşturursanız class’ınızın adı da otomatik olarak o ismi alacaktır. Bu detay önemlidir! Eğer daha önceden oluşturduğunuz bir C# scriptinin sonradan adını değiştirirseniz scripti elle açıp class adını da güncellemelisiniz yoksa hata alırsınız! Class tanımlamasına geri dönelim ve son kısma ( ” : MonoBehaviour” ) bakalım. Eğer yazdığımız class başka bir class’ı extend ediyorsa, yani başka bir class’ın özelliklerini aynen kullanıp üstüne yeni şeyler ekliyorsa extend edilen class’ın ismi iki nokta işaretinden sonra yazılır. Varsayılan olarak tüm C# scriptleri MonoBehaviour class’ını extend eder ve bu class Unity’nin Start(), Awake(), Update() gibi kendi fonksiyonları için tanımlar barındırır. Yani bu fonksiyonların ne zaman çağırılacağı gibi işlerle MonoBehaviour class’ı uğraşır ve biz bu class’ı extend ettiğimiz için, yani onun özelliklerini aynen kullanıp üzerine kendi yazdığımız kodları eklediğimiz için Update()’in ne zaman ne sıklıkla çalıştırılacağı gibi konularla hiç kafamızı karıştırmıyoruz ve bu tarz işleri MonoBehaviour class’ına bırakıp sadece Update()‘in içine yazacağımız koda odaklanıyoruz. Yaşasın!
+
+Gelelim kütüphane ekleme kısmına:
+
+
+using UnityEngine;
+using System.Collections;
+
+Bu kütüphaneler Javascript’te otomatik olarak eklenir. Bir kütüphane ne işe yarar? Barındırdığı hazır class’ları, fonksiyonları, struct’ları vb. kullanmamızı sağlar. Örneğin UnityEngine kütüphanesi MonoBehaviour class’ını barındırır. Eğer “using UnityEngine;” kodunu silerseniz hata alırsınız çünkü Unity MonoBehaviour class’ını bulamaz ama biz onu mevcut durumda class tanımlarken kullanmaktayız. “System.Collections” kütüphanesi ise List‘lerle, ArrayList‘lerle çalışmamıza olanak tanır. Array‘lere göre avantajları olan bu yapıları eğer kullanmayacaksanız “using System.Collections;” kodunu silerek yerden kazanabilirsiniz.
+
+Peki diyelim XML dosyaları ile çalışmak istiyoruz ve bu yüzden bize XmlDocument class’ı ve bu class’ın fonksiyonları lazım. Ne yapacağız? XmlDocument’in hangi kütüphanede yer aldığına bakacağız: “System.Xml“. O halde XmlDocument class’ını kullanmak için bu kütüphaneyi import etmemiz lazım. Bunu ise C#’ta şöyle yapıyoruz:
+
+
+using System.Xml;
+Javascript’te ise şöyle:
+
+
+import System.Xml;
+Kütüphaneyi import etme işlemi tüm scriptin en tepesinde yer almalı ve hiçbir fonksiyonun (ve C#’ta hiçbir class’ın) içinde olmamalıdır.
+
+Diğer Özel Durumlar
+
+new Takısı
+C#’ta yazılmış bir koda bakarken bolca new takısı göreceksiniz. Az önce bahsettiğimiz gibi yazdığımız her script bir class’tır. Ayrıca Unity’de Vector3, Color, Rect gibi sıklıkla kullanılan başka class’lar da vardır. Her class’ın constructor denen özel bir fonksiyonu vardır. Eğer siz elle constructor oluşturmazsanız Unity sizin için default constructor oluşturur ve bu default constructor görünmez vaziyettedir. Bu yüzden kendi yazdığınız scriptlerdeki constructor’ı göremezsiniz, kullanmazsınız da zaten bu constructor’ı. Constructor dediğimiz fonksiyon bir class’ın kopyasını (instance, klon) oluşturmaya yarar. Örneğin şu kodu ele alalım:
+
+
+transform.Translate( new Vector3( 10, 5, 5 ) * Time.deltaTime );
+Bu kodun yazıldığı obje her saniye x ekseninde 10 birim, y ekseninde 5 birim ve z ekseninde 5 birim hareket eder. Dikkat edin; burada Vector3′ten önce new takısını kullandık. Bizim istediğimiz vektörün x‘i 10, y‘si 5, z‘si 5. Ancak Vector3 class‘ında tam da bu istediğimiz x, y ve z değerlerine sahip bir Vector3 bulunmamakta. Sadece Vector3.up (yani 0, 1, 0 ), Vector3.right (yani 1, 0, 0 ) ve Vector3.forward (yani 0, 0, 1 ) gibi çok yalın vektörler var. Yani bizim isteğimizi karşılayan, (10, 5, 5) değerlerine sahip önceden tanımlanmış bir Vector3 yok. O halde napıyoruz? Kendi Vector3′ümüzü oluşturuyoruz! Yani yeni bir Vector3 oluşturuyoruz ve bunu yapmanın yolu da Vector3 class’ının constructor’ını kullanmak. Eğer Unity Script Reference’den Vector3′ün constructor’ına bakarsanız 3 parametre alan bir fonksiyon olduğunu görürsünüz: vektörün x, y ve z değerleri. Constructor’ı kullanıp Vector3 class’ından yeni (new) bir tane oluşturmak içinse şu yolu izliyoruz:
+
+
+new Vector3( 10, 5, 5 )
+Yani önce “new” takısını koyuyoruz ve sonra constructor fonksiyonuna gerekli parametreleri giriyoruz. Bu işlem Oracle’ın Java dilinde ve daha pek çok dilde de böyle işliyor. Ancak “kolay” olan Javascript dilinde bu “new” takısını kullanmak zorunlu değil.
+
+Umarım anlamışsınızdır.
+
+Tek Parametre İle Oynayamama
+Javascript’te şöyle birşey yapabilirsiniz:
+
+
+transform.position.x = 10;
+Ancak C#’ta bu mümkün değildir. Bunun yerine yapabileceğiniz iki şey var:
+
+
+transform.position = new Vector3( 10, transform.position.y, transform.position.z );
+Ya da:
+
+
+
+
+Vector3 v = transform.position;
+v.x = 10;
+transform.position = v;
+Generic Fonksiyonlar
+Unity’de generic fonksiyonlar vardır ve bunların en meşhuru GetComponent‘tir. Bu fonksiyonları Javascript’te normal bir fonksiyon gibi kullanabilirsiniz:
+
+
+var comp = GetComponent( Rigidbody );
+Ancak C#’ta kullanımı farklıdır:
+
+
+Rigidbody comp = GetComponent<Rigidbody>();
+Bir fonksiyonun generic olup olmadığını anlamanın en iyi yolu ise Unity Script Reference’ye bakmaktır.
+
+“as” Takısı
+C#’ta Instantiate fonksiyonunu kullanırken işe yarar. Javascript’te döndürülen obje otomatik olarak typecast olur:
+
+
+var obje : Transform = Instantiate( birPrefab, Vector3.zero, Quaternion.identity );
+Örneğin üstteki kod eğer birPrefab Transform türünde bir değişkense düzgün çalışır. Ancak ne olursa olsun alttaki kod C#’ta çalışmaz:
+
+
+Transform obje = Instantiate( birPrefab, Vector3.zero, Quaternion.identity );
+Çünkü Instantiate fonksiyonu “Object” türünde bir nesne döndürür ve bunun C#’ta elle typecast yapılması gerekir. Bu da şöyle yapılır:
+
+
+Transform obje = Instantiate( birPrefab, Vector3.zero, Quaternion.identity ) as Transform;
+Eğer birPrefab değişkeni Transform türünde değilse Javascript kodu da hata verir ve onun da şöyle değişmesi gerekir:
+
+
+var obje : Transform = Instantiate( birPrefab, Vector3.zero, Quaternion.identity ) as Transform;
+“out” Takısı
+Bu takıyla C#’ta raycast yaparken karşılaşırsınız. Şu şekilde RaycastHit değişkeninin başına gelir:
+
+
+RaycastHit hit;
+ 
+if( Physics.Raycast( transform.position, -Vector3.up, out hit ) )
+    //yapılacaklar
+Ancak Javascript’te buna gerek yoktur:
+
+
+var hit : RaycastHit;
+ 
+if( Physics.Raycast( transform.position, -Vector3.up, hit ) )
+    //yapılacaklar
+Kullandığımız bu “out” takısının ne işe yaradığını öğrenmek istiyorsanız Microsoft Developer Network’e (MSDN) gözatın: http://msdn.microsoft.com/en-us/library/ee332485.aspx
+
+float Sayılardaki “f” Takısı
+Bu C#’a özel bir kural. Eğer float bir sayı yazarsanız yanına “f” karakteri koymak zorundasınız (2.3f gibi). Javascript’te zorunlu değildir.
+
+foreach Kullanımı
+Bir List ile işlem yaparken Javascript’te aşağıdaki gibi bir kod yazabilirsiniz:
+
+
+for( var t : Touch in Input.touches )
+{
+    // yapılacak şeyler
+}
+“for“un bu kullanımı aslında şunun sadeleştirilmiş halidir:
+
+
+for( var i = 0; i < Input.touches.Length; i++ )
+{
+    var t : Touch = Input.touches[i];
+    // yapılacak şeyler
+}
+C#’ta ise “for“un kısaltılmış hali farklı bir şekilde kullanılır:
+
+
+foreach( Touch t in Input.touches )
+{
+    // yapılacak şeyler
+}
