@@ -1,4 +1,0 @@
-thegame
-=======
-
-Space Shooter
